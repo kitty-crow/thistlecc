@@ -1,0 +1,17 @@
+{
+  "name": "thistlecc",
+  "version": "1.0.0",
+  "description": "Host-side C/C++ to Thistle64 THX compiler driver for Bun",
+  "type": "module",
+  "bin": {
+    "thistlecc": "./bin/thistlecc.js",
+    "tcc": "./bin/thistlecc.js"
+  },
+  "scripts": {
+    "test": "node ./test/test.js"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "license": "MIT"
+}
