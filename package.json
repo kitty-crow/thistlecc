@@ -1,17 +1,42 @@
 {
   "name": "thistlecc",
-  "version": "1.0.0",
-  "description": "Host-side C/C++ to Thistle64 THX compiler driver for Bun",
+  "version": "2.0.0",
+  "description": "Bun-native TypeScript compiler driver for mikuOS Thistle64 RV64GC THX executables",
   "type": "module",
   "bin": {
-    "thistlecc": "./bin/thistlecc.js",
-    "tcc": "./bin/thistlecc.js"
+    "thistlecc": "./bin/thistlecc.ts",
+    "thistle++": "./bin/thistlecc.ts"
   },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE",
+    "thistlecc.schema.json",
+    "CHANGELOG.md",
+    "MIGRATION.md",
+    "install-into-project.sh"
+  ],
   "scripts": {
-    "test": "node ./test/test.js"
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "bun run ./test/test.ts",
+    "test:node": "rm -rf dist && tsc -p tsconfig.build.json && node ./dist/test/test.js"
   },
   "engines": {
-    "bun": ">=1.1.0"
+    "bun": ">=1.2.0"
   },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0"
+  },
+  "keywords": [
+    "mikuos",
+    "thistle",
+    "teto",
+    "riscv64",
+    "rv64gc",
+    "musl",
+    "thx"
+  ],
   "license": "MIT"
 }

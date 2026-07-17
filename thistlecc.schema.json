@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kittycrow.dev/schema/thistlecc-2.json",
+  "title": "thistlecc 2 configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "mikuosHome": { "type": "string", "minLength": 1 },
+    "converter": { "type": "string", "minLength": 1 },
+    "cc": { "type": "string", "minLength": 1 },
+    "cxx": { "type": "string", "minLength": 1 },
+    "strip": { "type": "string", "minLength": 1 },
+    "readelf": { "type": "string", "minLength": 1 },
+    "toolchainPrefix": { "type": "string", "minLength": 1 },
+    "march": { "type": "string", "minLength": 1 },
+    "mabi": { "type": "string", "minLength": 1 },
+    "sysroot": { "type": "string", "minLength": 1 },
+    "outputExtension": { "enum": ["39", "thx"] },
+    "reproducible": { "type": "boolean" },
+    "colour": { "enum": ["auto", "always", "never"] },
+    "defaultArgs": { "type": "array", "items": { "type": "string" } },
+    "converterArgs": { "type": "array", "items": { "type": "string" } }
+  }
+}

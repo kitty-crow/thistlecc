@@ -1,0 +1,11 @@
+{
+  "$schema": "../thistlecc.schema.json",
+  "mikuosHome": "..",
+  "toolchainPrefix": "riscv64-unknown-linux-musl-",
+  "march": "rv64gc",
+  "mabi": "lp64d",
+  "outputExtension": "39",
+  "reproducible": true,
+  "colour": "auto",
+  "defaultArgs": ["-O2", "-Wall", "-Wextra"]
+}

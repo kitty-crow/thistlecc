@@ -1,122 +1,189 @@
-# thistlecc
+# thistlecc 2.0.0
 
-A standalone, host-side Bun compiler driver for Thistle64.
+`thistlecc` is the host-side C/C++ compiler driver for **mikuOS**.
 
-It runs a locally installed RISC-V musl GCC/G++ cross-compiler to produce a static RV64 ELF, then invokes Thistle-OS's existing `build/tool/elf2thx.js` to create a `.thx` executable.
+It runs a RISC-V musl cross-compiler on the host, validates the resulting
+static ELF64 RISC-V executable, then invokes the current mikuOS
+`elf2thx` converter to create a checked **Thistle64 RV64GC THX2** executable.
+The source kernel is **Thistle**; **Teto** is the WebAssembly kernel generated
+from Thistle. The compiler output ABI is identical under either active kernel.
 
-It does **not** run inside Thistle and it does **not** modify the Thistle source tree.
+`.39` and `.thx` are exactly the same executable format. Version 2 defaults to
+`.39`, while accepting either suffix.
+
+## What changed in 2.0
+
+- rewritten as strict TypeScript and executed directly by Bun;
+- mikuOS/Thistle/Teto terminology replaces the old “Thistle-OS” wording;
+- RV64GC and LP64D are explicit, validated target defaults;
+- `.39` is the default suffix and `.thx` remains a first-class alias;
+- compile-only (`-c`), assembly (`-S`), preprocessing (`-E`) and relocatable
+  (`-r`) stages work as ordinary compiler stages instead of being rejected;
+- final links are checked internally as static little-endian RISC-V ET_EXEC;
+- generated THX2 length, FNV-1a checksum, machine, version and ISA are verified;
+- partial outputs are never installed: final files are copied atomically;
+- C++ selection works by extension, `thistle++`, `-x c++`, or `--language`;
+- object-only and archive links are supported;
+- compiler, converter, sysroot and toolchain-prefix configuration is supported;
+- project-local `thistlecc.json` discovery is supported;
+- reproducible prefix maps and disabled linker build IDs are enabled by default;
+- optional depfiles, ELF preservation, stripping, work retention and build
+  manifests are available;
+- `--doctor` reports the resolved toolchain and target as JSON;
+- legacy `THISTLE_HOME`, `THISTLE_CC`, `THISTLE_CXX` and `--elf2thx` remain
+  accepted for migration.
 
 ## Requirements
 
-- Bun
-- `riscv64-unknown-linux-musl-gcc`
-- `riscv64-unknown-linux-musl-g++` for C++
-- An extracted and built Thistle-OS tree containing `build/tool/elf2thx.js`
+- Bun 1.2 or newer;
+- a RISC-V musl cross-toolchain, normally:
+  - `riscv64-unknown-linux-musl-gcc`;
+  - `riscv64-unknown-linux-musl-g++`;
+  - optional matching `strip` and `readelf`;
+- a current built mikuOS source tree containing `build/tool/elf2thx.js`, or
+  the source converter at `src/tool/elf2thx.ts`.
 
-## Run directly
-
-```sh
-bun ./bin/thistlecc.js \
-  --thistle-home /path/to/Thistle-OS-2.1.0 \
-  hello.c -o hello.thx
-```
-
-For C++:
-
-```sh
-bun ./bin/thistlecc.js \
-  --thistle-home /path/to/Thistle-OS-2.1.0 \
-  hello.cpp -O2 -o hello.thx
-```
-
-## Configure the Thistle location once
-
-Linux/macOS:
-
-```sh
-export THISTLE_HOME=/path/to/Thistle-OS-2.1.0
-```
-
-PowerShell:
-
-```powershell
-$env:THISTLE_HOME = "C:\path\to\Thistle-OS-2.1.0"
-```
-
-Then:
-
-```sh
-bun ./bin/thistlecc.js hello.c -o hello.thx
-```
-
-The output name is optional. With no `-o`, `hello.c` becomes `hello.thx`.
-
-## Install command aliases
-
-From this directory:
+## Install or run directly
 
 ```sh
 bun link
+thistlecc --version
 ```
 
-This package exposes both names:
+No JavaScript build is required. The executable entry point is
+`bin/thistlecc.ts` with a Bun shebang.
+
+Direct execution:
 
 ```sh
-thistlecc hello.c -o hello.thx
-tcc hello.cpp -O2 -o hello.thx
+bun ./bin/thistlecc.ts --mikuos-home /path/to/mikuOS hello.c -o hello.39
 ```
 
-`tcc` may conflict with the real TinyCC command if it is installed on the host. Use `thistlecc` in that case.
+## Typical builds
 
-## Environment overrides
+C:
 
 ```sh
-THISTLE_CC=/custom/path/riscv64-unknown-linux-musl-gcc
-THISTLE_CXX=/custom/path/riscv64-unknown-linux-musl-g++
-THISTLE_ELF2THX=/path/to/build/tool/elf2thx.js
+thistlecc --mikuos-home /path/to/project hello.c -O2 -o hello.39
 ```
 
-Equivalent command-line options are available:
+C++:
 
 ```sh
-thistlecc \
-  --cc my-riscv-gcc \
-  --cxx my-riscv-g++ \
-  --elf2thx /path/to/elf2thx.js \
-  hello.c -o hello.thx
+thistle++ --mikuos-home /path/to/project hello.cpp -std=c++23 -O2 -o hello.39
 ```
 
-## Default target flags
+Multiple sources and libraries:
 
-The driver always supplies:
+```sh
+thistlecc main.c account-db.c -Iinclude -Llib -lfoo -o account-tool.39
+```
+
+The account utilities can therefore be built without invoking the currently
+unfinished native GCC execution path inside Teto.
+
+## Ordinary compiler stages
+
+These do not run `elf2thx`:
+
+```sh
+thistlecc -E source.c > source.i
+thistlecc -S source.c -o source.s
+thistlecc -c source.c -o source.o
+thistlecc -r one.o two.o -o combined.o
+```
+
+Only a final static ET_EXEC link becomes THX2.
+
+## Preserve and inspect the intermediate ELF
+
+```sh
+thistlecc --keep-elf program.c -o program.39
+```
+
+This writes `program.39.elf`. A custom path is accepted:
+
+```sh
+thistlecc --keep-elf=build/program.elf program.c -o program.39
+```
+
+Use `--emit=elf` to stop after the validated static ELF or `--emit=both` to
+produce both files.
+
+## Reproducible build manifest
+
+```sh
+SOURCE_DATE_EPOCH=0 thistlecc \
+  --manifest \
+  --keep-elf \
+  source.c -O2 -o source.39
+```
+
+The manifest records target identity, exact compiler and converter arguments,
+input/output SHA-256 hashes, converter hash and compiler version. It deliberately
+makes no claim that a successful build can run until the target kernel's
+required syscalls are present.
+
+## Diagnostics
+
+```sh
+thistlecc --mikuos-home . --doctor
+```
+
+This checks compiler discovery, `-dumpmachine`, compiler version, converter
+location and target settings. It does not execute code inside mikuOS.
+
+## Configuration
+
+`thistlecc` searches the current directory and its parents for
+`thistlecc.json` or `.thistlecc.json`.
+
+```json
+{
+  "$schema": "./thistlecc.schema.json",
+  "mikuosHome": ".",
+  "toolchainPrefix": "riscv64-unknown-linux-musl-",
+  "march": "rv64gc",
+  "mabi": "lp64d",
+  "outputExtension": "39",
+  "reproducible": true,
+  "defaultArgs": ["-O2", "-Wall", "-Wextra", "-Werror"]
+}
+```
+
+Use `--config FILE` for an explicit file or `--no-config` to disable discovery.
+Command-line options override environment variables, which override the file.
+
+Preferred environment variables:
+
+```sh
+export MIKUOS_HOME="/path/to/project"
+export THISTLECC_CC=riscv64-unknown-linux-musl-gcc
+export THISTLECC_CXX=riscv64-unknown-linux-musl-g++
+```
+
+## Default linked target flags
 
 ```text
--march=rv64g
+-march=rv64gc
 -mabi=lp64d
 -mno-relax
 -fno-pie
 -static
 -no-pie
 -Wl,--no-relax
+-Wl,--build-id=none
 ```
 
-Additional GCC/G++ arguments are passed through unchanged.
+Reproducible mode also adds file, macro and debug prefix maps from the working
+directory to `.`. User-supplied equivalents take precedence.
 
-## Keep the intermediate ELF
+## Security and correctness boundary
 
-```sh
-thistlecc --keep-elf hello.c -o hello.thx
-```
+`thistlecc` verifies the build artefact, not the completeness of the running
+kernel. A valid account utility may still receive `ENOSYS` if Teto or its
+compatibility bridge does not yet implement a filesystem operation used by the
+program. That is a kernel/runtime integration failure, not a compiler failure.
 
-This also writes `hello.thx.elf`. A custom location can be supplied:
-
-```sh
-thistlecc --keep-elf=build/hello.elf hello.c -o hello.thx
-```
-
-## Verbose and dry-run modes
-
-```sh
-thistlecc --verbose hello.c -o hello.thx
-thistlecc --dry-run hello.cpp -O3 -o hello.thx
-```
+Dynamic loaders, shared executables and PIE are rejected. The tool does not
+silently produce a Linux executable under a `.39` or `.thx` name.
