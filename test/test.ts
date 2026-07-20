@@ -1,10 +1,23 @@
 import { chmod, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import {
+  basename,
+  dirname,
+  join,
+  resolve,
+} from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
-const packageRoot = resolve(process.cwd());
+const testDirectory = dirname(fileURLToPath(import.meta.url));
+const testParent = resolve(testDirectory, "..");
+
+const packageRoot =
+  basename(testParent) === "dist"
+    ? resolve(testDirectory, "../..")
+    : testParent;
+
 const sourceCli = join(packageRoot, "bin", "thistlecc.ts");
 const builtCli = join(packageRoot, "dist", "bin", "thistlecc.js");
 const runningUnderBun = Boolean((process.versions as Record<string, string | undefined>).bun);

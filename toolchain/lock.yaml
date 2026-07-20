@@ -1,0 +1,58 @@
+schema: 1
+target:
+  triple: riscv64-unknown-linux-musl
+  march: rv64g
+  mabi: lp64d
+  relax: false
+sources:
+  musl:
+    version: 1.2.6
+    revision: b306b16af15c89a04d8e0c55cac2dadbeb39c083
+    url: https://git.musl-libc.org/cgit/musl/
+  shadow:
+    version: 4.19.4
+    revision: 115f7aa445f051a413d8b771efaa2ab0ca302770
+    url: https://github.com/shadow-maint/shadow.git
+  sudo:
+    version: 1.9.17p2
+    revision: sha256:4a38a1ab3adb1199257edc2a7c4a2bd714665eb605b04368843b06dada2cfcfb
+    url: https://www.sudo.ws/dist/
+    build: [static, embedded-sudoers, no-pam, passwd-shadow-auth, file-logging, no-pty]
+  tinycc:
+    revision: 97a6d8c75f40fd7eaf7646c131e65023fb3f01ec
+    version: 0.9.28rc
+    url: https://repo.or.cz/tinycc.git
+    patch: patches/tinycc-rv64-thistle.patch
+  llvm:
+    version: 22.1.0
+    url: https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.0/llvm-project-22.1.0.src.tar.xz
+    sha256: 25d2e2adc4356d758405dd885fcfd6447bce82a90eb78b6b87ce0934bd077173
+  gcc:
+    version: 16.1.0
+    url: https://ftp.gnu.org/gnu/gcc/gcc-16.1.0/gcc-16.1.0.tar.xz
+    sha256: 50efb4d94c3397aff3b0d61a5abd748b4dd31d9d3f2ab7be05b171d36a510f79
+    prerequisites:
+      base: https://gcc.gnu.org/pub/gcc/infrastructure/
+      gmp-6.3.0.tar.bz2: ac28211a7cfb609bae2e2c8d6058d66c8fe96434f740cf6fe2e47b000d1c20cb
+      mpfr-4.2.2.tar.bz2: 9ad62c7dc910303cd384ff8f1f4767a655124980bb6d8650fe62c815a231bb7b
+      mpc-1.3.1.tar.gz: ab642492f5cf882b74aa0cb730cd410a81edcdbec895183ce930e706c1c759b8
+      isl-0.24.tar.bz2: fcf78dd9656c10eb8cf9fbd5f59a0b6b01386205fe1934b3b287a0a1898145c0
+      gettext-0.22.tar.gz: 49f089be11b490170bbf09ed2f51e5f5177f55be4cc66504a5861820e0fb06ab
+  binutils:
+    version: 2.46.1
+    url: https://ftp.gnu.org/gnu/binutils/binutils-2.46.1.tar.xz
+    sha256: e127a709cba24c76de8936cb7083dd768f28cd37eb010492e2f19b71eb1294e4
+bootstrap:
+  cross_gcc: 16.1.0
+  cross_release: 20260515
+  cross_url: https://github.com/cross-tools/musl-cross/releases/download/20260515/riscv64-unknown-linux-musl.tar.xz
+  cross_archive_sha256: 4b7175a842b75f98bf07d21b3ec4d66f923a21a9e817d72b58c070ee44e895ec
+  libc: musl
+  llvm_projects: [clang, lld]
+  qemu_user: 7.2.0
+  qemu_role: build-time-cmake-probes-only
+build:
+  llvm: [MinSizeRel, RISCV, clang, lld, static, rv64g, lp64d, no-relax, no-zlib, no-zstd]
+  gcc: [c, c++, Os, static, cross-default-rv64gc-lp64d, no-bootstrap, no-lto, no-plugin, no-multilib]
+  binutils: [static, rv64g, lp64d, no-relax, no-nls, no-gprofng, no-shared]
+  guest_final_link: [rv64g, lp64d, static, no-pie, no-relax]

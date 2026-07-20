@@ -1,0 +1,39 @@
+schema: 1
+release: 2.1.0-r2
+target: riscv64-unknown-linux-musl
+machine: thistle64
+isa: rv64gc
+abi: lp64d
+container: thx2
+components:
+  driver:
+    path: /usr/libexec/thistle/thx-cc
+    aliases: [tcc, clang, clang++, gcc, g++, cc, c++, cpp, riscv64-unknown-linux-musl-gcc, riscv64-unknown-linux-musl-g++]
+  tinycc:
+    version: 0.9.28rc
+    path: /usr/libexec/thistle/tcc
+  clang:
+    version: 22.1.0
+    paths: [/usr/libexec/thistle/clang, /usr/libexec/thistle/clang++]
+  lld:
+    version: 22.1.0
+    path: /usr/libexec/thistle/ld.lld
+  gcc:
+    version: 16.1.0
+    paths: [/usr/libexec/thistle/gcc, /usr/libexec/thistle/g++, /usr/libexec/gcc/riscv64-unknown-linux-musl/16.1.0]
+  binutils:
+    version: 2.46.1
+    path: /usr/libexec/thistle/gnu
+  musl:
+    version: 1.2.6
+    path: /usr/lib
+  libstdcxx:
+    version: 16.1.0
+    path: /usr/lib
+link:
+  kind: static
+  pie: false
+  relax: false
+  final: elf64-riscv-to-thx2
+disabled: [dynamic-linking, lto, plugins, sanitizers, openmp, multilib]
+verification: npm run test:toolchain

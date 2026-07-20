@@ -19,7 +19,7 @@
   ],
   "scripts": {
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "bun run ./test/test.ts",
+    "test": "bun run ./test/test.ts && bun run ./test/thistleasm-compat.ts",
     "test:node": "rm -rf dist && tsc -p tsconfig.build.json && node ./dist/test/test.js"
   },
   "engines": {

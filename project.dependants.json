@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "dependants": [
+    {
+      "repository": "kitty-crow/mikuOS",
+      "dependency": "ThistleCC",
+      "impact": [
+        "compiler-driver",
+        "native-userland",
+        "root-image"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+diff --git a/lib/armflush.c b/lib/armflush.c
+index 6ec11f3..7e5e4db 100644
+--- a/lib/armflush.c
++++ b/lib/armflush.c
+@@ -64,7 +64,13 @@ void __clear_cache(void *beg, void *end)
+ #elif defined __riscv
+ void __clear_cache(void *beg, void *end)
+ {
++#ifdef __TINYC__
+     __riscv64_clear_cache(beg, end);
++#else
++    (void)beg;
++    (void)end;
++    __asm__ volatile ("fence.i" ::: "memory");
++#endif
+ }
+ 
+ #endif
+diff --git a/riscv64-link.c b/riscv64-link.c
+index 48ae785..bbb3e79 100644
+--- a/riscv64-link.c
++++ b/riscv64-link.c
+@@ -34,6 +34,9 @@ ST_FUNC int code_reloc (int reloc_type)
+         return 1;
+ 
+     case R_RISCV_GOT_HI20:
++    case R_RISCV_HI20:
++    case R_RISCV_LO12_I:
++    case R_RISCV_LO12_S:
+     case R_RISCV_PCREL_HI20:
+     case R_RISCV_PCREL_LO12_I:
+     case R_RISCV_PCREL_LO12_S:
+@@ -83,6 +86,9 @@ ST_FUNC int gotplt_entry_type (int reloc_type)
+     case R_RISCV_SUB16:
+     case R_RISCV_SET_ULEB128:
+     case R_RISCV_SUB_ULEB128:
++    case R_RISCV_HI20:
++    case R_RISCV_LO12_I:
++    case R_RISCV_LO12_S:
+         return NO_GOTPLT_ENTRY;
+ 
+     case R_RISCV_BRANCH:
+@@ -244,6 +250,20 @@ ST_FUNC void relocate(TCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr,
+         write32le(ptr + 4, (read32le(ptr + 4) & 0xfffff)
+                            | (((val - addr) & 0xfff) << 20));
+         return;
++    case R_RISCV_HI20:
++        write32le(ptr, (read32le(ptr) & 0xfff)
++                       | ((val + 0x800) & 0xfffff000));
++        return;
++    case R_RISCV_LO12_I:
++        write32le(ptr, (read32le(ptr) & 0xfffff)
++                       | ((val & 0xfff) << 20));
++        return;
++    case R_RISCV_LO12_S:
++        off32 = val & 0xfff;
++        write32le(ptr, (read32le(ptr) & ~0xfe000f80)
++                       | ((off32 & 0xfe0) << 20)
++                       | ((off32 & 0x01f) << 7));
++        return;
+     case R_RISCV_PCREL_HI20:
+ #ifdef DEBUG_RELOC
+         printf("PCREL_HI20: val=%lx addr=%lx\n", (long)val, (long)addr);
