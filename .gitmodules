@@ -1,6 +1,6 @@
 [submodule "vendor/kittyx"]
 	path = vendor/kittyx
-	url = ../kittyx.git
+	url = https://github.com/kitty-crow/kittyx.git
 [submodule "vendor/thistle-asm"]
 	path = vendor/thistle-asm
-	url = ../thistle-asm.git
+	url = https://github.com/kitty-crow/thistle-asm.git
